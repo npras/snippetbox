@@ -1,3 +1,3 @@
-module snippetbox.elon.com
+module github.com/npras/snippetbox
 
-go 1.22.3
+go 1.23.0
