@@ -1,22 +1,28 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type config struct {
-	addr      string
+	port      string
 	staticDir string
+	dsn       string
 }
 
 type application struct {
+	config config
 	logger *slog.Logger
 }
 
-func NewLogger() *slog.Logger {
+func newLogger() *slog.Logger {
 	logOpts := &slog.HandlerOptions{
 		Level:     slog.LevelDebug,
 		AddSource: true,
@@ -24,28 +30,49 @@ func NewLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(os.Stdout, logOpts))
 }
 
-func main() {
-	cfg := config{}
-
-	flag.StringVar(&cfg.addr, "addr", ":4000", "HTTP network address")
-	flag.StringVar(&cfg.staticDir, "static-dir", "./ui/static", "Path to static assets")
+func parseFlags(app *application) {
+	flag.StringVar(&app.config.port, "port", ":4000", "port in which the server listens")
+	flag.StringVar(&app.config.staticDir, "static-dir", "./ui/static", "Path to static assets")
+	flag.StringVar(&app.config.dsn, "dsn", "postgresql://web:golanger1234567@localhost:5432/snippetbox", "PostgreSQL data source name")
 	flag.Parse()
+}
 
-	app := &application{logger: NewLogger()}
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return nil, err
+	}
+	err = db.Ping()
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+	return db, nil
+}
 
-	mux := http.NewServeMux()
+//
 
-	fileServer := http.FileServer(http.Dir(cfg.staticDir))
-	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+func main() {
+	app := &application{logger: newLogger()}
+	parseFlags(app)
 
-	mux.HandleFunc("GET /{$}", app.home)
-	mux.HandleFunc("GET /snippet/view/{id}", app.snippetView)
-	mux.HandleFunc("GET /snippet/create", app.snippetCreate)
-	mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
+	db, err := openDB(app.config.dsn)
+	if err != nil {
+		app.logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer db.Close()
 
-	app.logger.Info("starting server on", slog.String("port", cfg.addr))
+	var greeting string
+	err = db.QueryRow("select content from snippets limit 1").Scan(&greeting)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(greeting)
 
-	err := http.ListenAndServe(cfg.addr, mux)
+	app.logger.Info("starting server on", slog.String("port", app.config.port))
+	err = http.ListenAndServe(app.config.port, app.routes())
 	app.logger.Error(err.Error())
 	os.Exit(1)
 }
