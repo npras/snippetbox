@@ -9,6 +9,7 @@ import (
 	"os"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/npras/snippetbox/internal/models"
 )
 
 type config struct {
@@ -18,8 +19,9 @@ type config struct {
 }
 
 type application struct {
-	config config
-	logger *slog.Logger
+	config  *config
+	logger  *slog.Logger
+	snippet *models.SnippetModel
 }
 
 func newLogger() *slog.Logger {
@@ -30,10 +32,10 @@ func newLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(os.Stdout, logOpts))
 }
 
-func parseFlags(app *application) {
-	flag.StringVar(&app.config.port, "port", ":4000", "port in which the server listens")
-	flag.StringVar(&app.config.staticDir, "static-dir", "./ui/static", "Path to static assets")
-	flag.StringVar(&app.config.dsn, "dsn", "postgresql://web:golanger1234567@localhost:5432/snippetbox", "PostgreSQL data source name")
+func parseFlags(c *config) {
+	flag.StringVar(&c.port, "port", ":4000", "port in which the server listens")
+	flag.StringVar(&c.staticDir, "static-dir", "./ui/static", "Path to static assets")
+	flag.StringVar(&c.dsn, "dsn", "postgresql://web:golanger1234567@localhost:5432/snippetbox", "PostgreSQL data source name")
 	flag.Parse()
 }
 
@@ -53,15 +55,23 @@ func openDB(dsn string) (*sql.DB, error) {
 //
 
 func main() {
-	app := &application{logger: newLogger()}
-	parseFlags(app)
+	logger := newLogger()
 
-	db, err := openDB(app.config.dsn)
+	config := &config{}
+	parseFlags(config)
+
+	db, err := openDB(config.dsn)
 	if err != nil {
-		app.logger.Error(err.Error())
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 	defer db.Close()
+
+	app := &application{
+		logger:  logger,
+		config:  config,
+		snippet: &models.SnippetModel{DB: db},
+	}
 
 	var greeting string
 	err = db.QueryRow("select content from snippets limit 1").Scan(&greeting)
