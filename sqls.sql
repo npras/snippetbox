@@ -77,3 +77,21 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE O
 
 -- If you need to change the password later
 ALTER USER web WITH PASSWORD 'golanger1234567';
+
+
+---
+
+/*
+
+-- BACKUP and RESTORE
+
+# Restore global objects (including the 'web' user)
+psql -U postgres -h localhost -p 5432 -f global_objects.sql
+
+# Create the snippetbox database if it doesn't exist
+psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE snippetbox;"
+
+# Restore the snippetbox database
+pg_restore -U postgres -h localhost -p 5432 -d snippetbox -v snippetbox_backup.dump
+
+*/
