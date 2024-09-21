@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"time"
 )
 
@@ -16,6 +17,8 @@ type Snippet struct {
 type SnippetModel struct {
 	DB *sql.DB
 }
+
+//
 
 func (m *SnippetModel) Insert(title string, content string, expiresAt int) (int, error) {
 	qry := `
@@ -35,9 +38,27 @@ func (m *SnippetModel) Insert(title string, content string, expiresAt int) (int,
 	return id, nil
 }
 
+//
+
 func (m *SnippetModel) Get(id int) (Snippet, error) {
-	return Snippet{}, nil
+	var s Snippet
+	stmt := `
+	SELECT id, title, content, created_at, expires_at
+		FROM snippets
+		WHERE
+			expires_at > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
+			AND id = $1
+	`
+	err := m.DB.QueryRow(stmt, id).Scan(&s.ID, &s.Title, &s.Content, &s.CreatedAt, &s.ExpiresAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Snippet{}, ErrNoRecord
+		}
+	}
+	return s, nil
 }
+
+//
 
 func (m *SnippetModel) Latest() ([]Snippet, error) {
 	return nil, nil

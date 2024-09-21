@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
+
+	"github.com/npras/snippetbox/internal/models"
 )
 
 //
@@ -37,7 +40,16 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+	s, err := app.snippet.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			http.NotFound(w, r)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+	fmt.Fprintf(w, "%+v", s)
 }
 
 //
@@ -49,8 +61,8 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 //
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	title := "1O snail"
-	content := "1O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
+	title := "99 snail"
+	content := "99 snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
 	expiresAt := 10
 
 	id, err := app.snippet.Insert(title, content, expiresAt)

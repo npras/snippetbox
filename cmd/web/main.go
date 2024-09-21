@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"flag"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -72,14 +71,6 @@ func main() {
 		config:  config,
 		snippet: &models.SnippetModel{DB: db},
 	}
-
-	var greeting string
-	err = db.QueryRow("select content from snippets limit 1").Scan(&greeting)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Println(greeting)
 
 	app.logger.Info("starting server on", slog.String("port", app.config.port))
 	err = http.ListenAndServe(app.config.port, app.routes())
