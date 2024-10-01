@@ -2,7 +2,10 @@ module github.com/npras/snippetbox
 
 go 1.23.0
 
-require github.com/jackc/pgx/v5 v5.7.1
+require (
+	github.com/jackc/pgx/v5 v5.7.1
+	github.com/justinas/alice v1.2.0
+)
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
