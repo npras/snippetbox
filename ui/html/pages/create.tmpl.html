@@ -1,0 +1,32 @@
+{{define "title"}}Create a New Snippet{{end}}
+
+{{define "main"}}
+
+<form action="/snippet/create" method="post">
+  <div>
+    <label for="title">Title:</label>
+    <input type="text" name="title" id="title">
+  </div>
+
+  <div>
+    <label for="content">Content:</label>
+    <textarea name="content" cols="30" rows="10"></textarea>
+  </div>
+
+  <div>
+    <label >Delete in:</label>
+
+      <input type="radio" name="expires" value="365" id="365" checked>
+      <label for="365"> One Year </label>
+
+      <input type="radio" name="expires" value="7" id="7">
+      <label for="7"> One Week </label>
+
+      <input type="radio" name="expires" value="1" id="1">
+      <label for="1"> One Day </label>
+  </div>
+
+  <div> <input type="submit" value="Publish Snippet"> </div>
+</form>
+
+{{end}}
