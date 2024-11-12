@@ -46,8 +46,8 @@ func (m *SnippetModel) Get(id int) (Snippet, error) {
 	SELECT id, title, content, created_at, expires_at
 		FROM snippets
 		WHERE
-			expires_at > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
-			AND id = $1
+			id = $1
+			AND expires_at > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 	`
 	err := m.DB.QueryRow(stmt, id).Scan(&s.ID, &s.Title, &s.Content, &s.CreatedAt, &s.ExpiresAt)
 	if err != nil {
