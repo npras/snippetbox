@@ -4,12 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"slices"
 	"strconv"
-	"strings"
-	"unicode/utf8"
 
 	"github.com/npras/snippetbox/internal/models"
+	"github.com/npras/snippetbox/internal/validator"
 )
 
 //
@@ -62,10 +60,10 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 //
 
 type snippetCreateForm struct {
-	Title       string
-	Content     string
-	ExpiresAt   int
-	FieldErrors map[string]string
+	Title     string
+	Content   string
+	ExpiresAt int
+	validator.Validator
 }
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
@@ -83,14 +81,13 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	}
 
 	form := snippetCreateForm{
-		Title:       r.PostForm.Get("title"),
-		Content:     r.PostForm.Get("content"),
-		ExpiresAt:   expiresAt,
-		FieldErrors: map[string]string{},
+		Title:     r.PostForm.Get("title"),
+		Content:   r.PostForm.Get("content"),
+		ExpiresAt: expiresAt,
 	}
 
-	validateSnippetCreateFields(form.FieldErrors, form.Title, form.Content, form.ExpiresAt)
-	if len(form.FieldErrors) > 0 {
+	validateSnippetCreateFields(&form)
+	if !form.IsValid() {
 		data := app.newTemplateData(r)
 		data.Form = form
 		app.render(w, r, http.StatusOK, "create.tmpl.html", data)
@@ -106,19 +103,9 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	http.Redirect(w, r, redirectToURL, http.StatusSeeOther)
 }
 
-func validateSnippetCreateFields(m map[string]string, title, content string, expiresAt int) {
-	if strings.TrimSpace(title) == "" {
-		m["title"] = "title can't be blank"
-	} else if utf8.RuneCountInString(title) > 100 {
-		m["title"] = "title should be less than 100 chars"
-	}
-
-	if strings.TrimSpace(content) == "" {
-		m["content"] = "content can't be blank"
-	}
-
-	validExpiresAt := []int{1, 7, 365}
-	if !slices.Contains(validExpiresAt, expiresAt) {
-		m["expiresAt"] = "expiresAt should be one of 1, 7, 365"
-	}
+func validateSnippetCreateFields(f *snippetCreateForm) {
+	f.CheckAndAddFieldError(validator.NotBlank(f.Title), "title", "title can't be blank")
+	f.CheckAndAddFieldError(validator.LessThanMaxChars(f.Title, 100), "title", "title should be less than 100 chars")
+	f.CheckAndAddFieldError(validator.NotBlank(f.Content), "content", "content can't be blank")
+	f.CheckAndAddFieldError(validator.PermittedValue(f.ExpiresAt, 1, 7, 365), "expiresAt", "expiresAt should be one of 1, 7, 365")
 }
