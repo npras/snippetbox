@@ -60,10 +60,10 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 //
 
 type snippetCreateForm struct {
-	Title     string
-	Content   string
-	ExpiresAt int
-	validator.Validator
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	ExpiresAt           int    `form:"expiresAt"`
+	validator.Validator `form:"-"`
 }
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {

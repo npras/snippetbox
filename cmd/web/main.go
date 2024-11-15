@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/go-playground/form/v4"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/npras/snippetbox/internal/models"
 )
@@ -23,6 +24,7 @@ type application struct {
 	logger        *slog.Logger
 	snippet       *models.SnippetModel
 	templateCache map[string]*template.Template
+	formDecoder   *form.Decoder
 }
 
 func newLogger() *slog.Logger {
@@ -74,11 +76,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	formDecoder := form.NewDecoder()
+
 	app := &application{
 		logger:        logger,
 		config:        config,
 		snippet:       &models.SnippetModel{DB: db},
 		templateCache: templateCache,
+		formDecoder:   formDecoder,
 	}
 
 	app.logger.Info("starting server on", slog.String("port", app.config.port))
