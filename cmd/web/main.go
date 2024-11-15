@@ -1,15 +1,20 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"flag"
+	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/alexedwards/scs/pgxstore"
+	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/npras/snippetbox/internal/models"
 )
 
@@ -20,11 +25,12 @@ type config struct {
 }
 
 type application struct {
-	config        *config
-	logger        *slog.Logger
-	snippet       *models.SnippetModel
-	templateCache map[string]*template.Template
-	formDecoder   *form.Decoder
+	config         *config
+	logger         *slog.Logger
+	snippet        *models.SnippetModel
+	templateCache  map[string]*template.Template
+	formDecoder    *form.Decoder
+	sessionManager *scs.SessionManager
 }
 
 func newLogger() *slog.Logger {
@@ -42,17 +48,25 @@ func parseFlags(c *config) {
 	flag.Parse()
 }
 
-func openDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("pgx", dsn)
+func openDB(dsn string) (*pgxpool.Pool, error) {
+	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 		return nil, err
 	}
-	err = db.Ping()
+	err = pool.Ping(context.Background())
 	if err != nil {
-		db.Close()
+		pool.Close()
 		return nil, err
 	}
-	return db, nil
+	return pool, nil
+}
+
+func newSessionManager(pool *pgxpool.Pool) *scs.SessionManager {
+	sm := scs.New()
+	sm.Store = pgxstore.New(pool)
+	sm.Lifetime = 12 * time.Hour
+	return sm
 }
 
 //
@@ -63,12 +77,12 @@ func main() {
 	config := &config{}
 	parseFlags(config)
 
-	db, err := openDB(config.dsn)
+	pool, err := openDB(config.dsn)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer pool.Close()
 
 	templateCache, err := newTemplateCache()
 	if err != nil {
@@ -76,14 +90,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	formDecoder := form.NewDecoder()
-
 	app := &application{
-		logger:        logger,
-		config:        config,
-		snippet:       &models.SnippetModel{DB: db},
-		templateCache: templateCache,
-		formDecoder:   formDecoder,
+		logger:         logger,
+		config:         config,
+		snippet:        &models.SnippetModel{DbPool: pool},
+		templateCache:  templateCache,
+		formDecoder:    form.NewDecoder(),
+		sessionManager: newSessionManager(pool),
 	}
 
 	app.logger.Info("starting server on", slog.String("port", app.config.port))
