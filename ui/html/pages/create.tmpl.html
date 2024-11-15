@@ -26,13 +26,13 @@
       <label class="error">{{.}}</label>
     {{end}}
 
-      <input type="radio" name="expires" value="365" id="365" {{if (eq .Form.ExpiresAt 365)}}checked{{end}}>
+      <input type="radio" name="expiresAt" value="365" id="365" {{if (eq .Form.ExpiresAt 365)}}checked{{end}}>
       <label for="365"> One Year </label>
 
-      <input type="radio" name="expires" value="7" id="7" {{if (eq .Form.ExpiresAt 7)}}checked{{end}}>
+      <input type="radio" name="expiresAt" value="7" id="7" {{if (eq .Form.ExpiresAt 7)}}checked{{end}}>
       <label for="7"> One Week </label>
 
-      <input type="radio" name="expires" value="1" id="1" {{if (eq .Form.ExpiresAt 1)}}checked{{end}}>
+      <input type="radio" name="expiresAt" value="1" id="1" {{if (eq .Form.ExpiresAt 1)}}checked{{end}}>
       <label for="1"> One Day </label>
   </div>
 

@@ -68,33 +68,23 @@ type snippetCreateForm struct {
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 	app.logger.Info("CREATING SNIPPET")
-	err := r.ParseForm()
+	var snippetForm snippetCreateForm
+
+	err := app.decodePostForm(r, &snippetForm)
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
 
-	expiresAt, err := strconv.Atoi(r.PostForm.Get("expires"))
-	if err != nil {
-		app.clientError(w, http.StatusBadRequest)
-		return
-	}
-
-	form := snippetCreateForm{
-		Title:     r.PostForm.Get("title"),
-		Content:   r.PostForm.Get("content"),
-		ExpiresAt: expiresAt,
-	}
-
-	validateSnippetCreateFields(&form)
-	if !form.IsValid() {
+	validateSnippetCreateFields(&snippetForm)
+	if !snippetForm.IsValid() {
 		data := app.newTemplateData(r)
-		data.Form = form
+		data.Form = snippetForm
 		app.render(w, r, http.StatusOK, "create.tmpl.html", data)
 		return
 	}
 
-	id, err := app.snippet.Insert(form.Title, form.Content, form.ExpiresAt)
+	id, err := app.snippet.Insert(snippetForm.Title, snippetForm.Content, snippetForm.ExpiresAt)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
