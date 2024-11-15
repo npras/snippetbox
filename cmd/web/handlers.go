@@ -41,6 +41,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
 	data := app.newTemplateData(r)
 	data.Snippet = snippet
 	app.render(w, r, http.StatusOK, "view.tmpl.html", data)
@@ -89,9 +90,13 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		app.serverError(w, r, err)
 		return
 	}
+
+	app.sessionManager.Put(r.Context(), "flash", "OOPS! Snippet created unfortunately. Sigh!")
 	redirectToURL := fmt.Sprintf("/snippet/view/%d", id)
 	http.Redirect(w, r, redirectToURL, http.StatusSeeOther)
 }
+
+//
 
 func validateSnippetCreateFields(f *snippetCreateForm) {
 	f.CheckAndAddFieldError(validator.NotBlank(f.Title), "title", "title can't be blank")

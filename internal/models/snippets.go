@@ -70,7 +70,7 @@ func (m *SnippetModel) Latest() ([]Snippet, error) {
 		WHERE
 			expires_at > (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 		ORDER BY id DESC
-		LIMIT 10	
+		LIMIT 20	
 	`
 	rows, err := m.DbPool.Query(context.Background(), stmt)
 	if err != nil {

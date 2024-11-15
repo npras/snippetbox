@@ -44,7 +44,7 @@ func newLogger() *slog.Logger {
 func parseFlags(c *config) {
 	flag.StringVar(&c.port, "port", ":4000", "port in which the server listens")
 	flag.StringVar(&c.staticDir, "static-dir", "./ui/static", "Path to static assets")
-	flag.StringVar(&c.dsn, "dsn", "postgresql://web:golanger1234567@localhost:5432/snippetbox", "PostgreSQL data source name")
+	flag.StringVar(&c.dsn, "dsn", "postgresql://postgres:golanger1234567@localhost:5432/snippetbox", "PostgreSQL data source name")
 	flag.Parse()
 }
 
