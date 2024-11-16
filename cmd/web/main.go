@@ -99,8 +99,15 @@ func main() {
 		sessionManager: newSessionManager(pool),
 	}
 
+	srv := &http.Server{
+		Addr:     config.port,
+		Handler:  app.routes(),
+		ErrorLog: slog.NewLogLogger(app.logger.Handler(), slog.LevelError),
+	}
+
 	app.logger.Info("starting server on", slog.String("port", app.config.port))
-	err = http.ListenAndServe(app.config.port, app.routes())
+
+	err = srv.ListenAndServe()
 	app.logger.Error(err.Error())
 	os.Exit(1)
 }
