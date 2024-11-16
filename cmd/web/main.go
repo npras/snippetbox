@@ -66,6 +66,7 @@ func newSessionManager(pool *pgxpool.Pool) *scs.SessionManager {
 	sm := scs.New()
 	sm.Store = pgxstore.New(pool)
 	sm.Lifetime = 12 * time.Hour
+	sm.Cookie.Secure = true
 	return sm
 }
 
@@ -107,7 +108,7 @@ func main() {
 
 	app.logger.Info("starting server on", slog.String("port", app.config.port))
 
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	app.logger.Error(err.Error())
 	os.Exit(1)
 }
