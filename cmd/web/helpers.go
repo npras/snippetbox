@@ -17,7 +17,8 @@ func (app *application) serverError(w http.ResponseWriter, r *http.Request, err 
 		slog.String("method", r.Method),
 		slog.String("uri", r.URL.RequestURI()),
 		slog.String("trace", string(debug.Stack())))
-	http.Error(w, "Internal Server Error. Oopsies", http.StatusInternalServerError)
+	//http.Error(w, "Internal Server Error. Oopsies", http.StatusInternalServerError)
+	http.Error(w, fmt.Sprintf("Internal Server Error. Oopsies: %T", err), http.StatusInternalServerError)
 }
 
 //

@@ -81,7 +81,7 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	if !snippetForm.IsValid() {
 		data := app.newTemplateData(r)
 		data.Form = snippetForm
-		app.render(w, r, http.StatusOK, "create.tmpl.html", data)
+		app.render(w, r, http.StatusUnprocessableEntity, "create.tmpl.html", data)
 		return
 	}
 
