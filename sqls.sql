@@ -88,6 +88,22 @@ CREATE TABLE users (
    CONSTRAINT users_uc_email UNIQUE (email)
 );
 
+CREATE TABLE public.sessions (
+    token text NOT NULL,
+    data bytea NOT NULL,
+    expiry timestamp with time zone NOT NULL
+);
+
+
+ALTER TABLE public.sessions OWNER TO postgres;
+
+--
+-- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sessions
+    ADD CONSTRAINT sessions_pkey PRIMARY KEY (token);
+
 ---
 
 /*
