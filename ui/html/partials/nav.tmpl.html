@@ -6,8 +6,11 @@
 
   <div>
     {{if .IsAuthenticated}}
+      <span>{{ .LoggedInUserEmail }}</span>
       <a href="/snippet/create">Create Snippet</a>
       <form action="/user/logout" method="POST">
+        <!-- Include the CSRF token -->
+        <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
         <button>Logout</button>
       </form>
     {{else}}

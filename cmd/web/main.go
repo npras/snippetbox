@@ -19,6 +19,58 @@ import (
 	"github.com/npras/snippetbox/internal/models"
 )
 
+func main() {
+	logger := newLogger()
+
+	config := &config{}
+	parseFlags(config)
+
+	pool, err := openDB(config.dsn)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	defer pool.Close()
+
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	app := &application{
+		logger:         logger,
+		config:         config,
+		snippet:        &models.SnippetModel{DbPool: pool},
+		user:           &models.UserModel{DbPool: pool},
+		templateCache:  templateCache,
+		formDecoder:    form.NewDecoder(),
+		sessionManager: newSessionManager(pool),
+	}
+
+	tlsConfig := &tls.Config{
+		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+	}
+
+	srv := &http.Server{
+		Addr:         config.port,
+		Handler:      app.routes(),
+		ErrorLog:     slog.NewLogLogger(app.logger.Handler(), slog.LevelError),
+		TLSConfig:    tlsConfig,
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	app.logger.Info("starting server on", slog.String("port", app.config.port))
+
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
+	app.logger.Error(err.Error())
+	os.Exit(1)
+}
+
+//
+
 type config struct {
 	port      string
 	staticDir string
@@ -70,56 +122,4 @@ func newSessionManager(pool *pgxpool.Pool) *scs.SessionManager {
 	sm.Lifetime = 12 * time.Hour
 	sm.Cookie.Secure = true
 	return sm
-}
-
-//
-
-func main() {
-	logger := newLogger()
-
-	config := &config{}
-	parseFlags(config)
-
-	pool, err := openDB(config.dsn)
-	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
-	}
-	defer pool.Close()
-
-	templateCache, err := newTemplateCache()
-	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
-	}
-
-	app := &application{
-		logger:         logger,
-		config:         config,
-		snippet:        &models.SnippetModel{DbPool: pool},
-		user:           &models.UserModel{DbPool: pool},
-		templateCache:  templateCache,
-		formDecoder:    form.NewDecoder(),
-		sessionManager: newSessionManager(pool),
-	}
-
-	tlsConfig := &tls.Config{
-		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
-	}
-
-	srv := &http.Server{
-		Addr:         config.port,
-		Handler:      app.routes(),
-		ErrorLog:     slog.NewLogLogger(app.logger.Handler(), slog.LevelError),
-		TLSConfig:    tlsConfig,
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-
-	app.logger.Info("starting server on", slog.String("port", app.config.port))
-
-	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
-	app.logger.Error(err.Error())
-	os.Exit(1)
 }

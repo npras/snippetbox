@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/justinas/alice"
+	"github.com/npras/snippetbox/ui"
 )
 
 func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	fileServer := http.FileServer(http.Dir(app.config.staticDir))
-	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
+	mux.Handle("GET /static/", http.FileServerFS(ui.Files))
 
-	dynamicMiddlewares := alice.New(app.sessionManager.LoadAndSave)
+	dynamicMiddlewares := alice.New(app.sessionManager.LoadAndSave, app.noSurf, app.authenticate)
 
 	mux.Handle("GET /{$}", dynamicMiddlewares.ThenFunc(app.home))
 	mux.Handle("GET /snippet/view/{id}", dynamicMiddlewares.ThenFunc(app.snippetView))

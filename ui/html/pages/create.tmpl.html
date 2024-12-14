@@ -4,6 +4,10 @@
 {{define "main"}}
 
 <form action="/snippet/create" method="post">
+
+  <!-- Include the CSRF token -->
+  <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+
   <div>
     <label for="title">Title:</label>
     {{with .Form.FieldErrors.title}}
@@ -37,6 +41,7 @@
   </div>
 
   <div> <input type="submit" value="Publish Snippet"> </div>
+
 </form>
 
 {{end}}

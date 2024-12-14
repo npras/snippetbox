@@ -109,6 +109,7 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
+	app.sessionManager.Put(r.Context(), "loggedInUserEmail", form.Email)
 	app.sessionManager.Put(r.Context(), "flash", "Login Succeeded LOLL! Now create a snippet@!!")
 	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
 }
@@ -121,6 +122,7 @@ func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	app.sessionManager.Remove(r.Context(), "authenticatedUserID")
+	app.sessionManager.Remove(r.Context(), "loggedInUserEmail")
 	app.sessionManager.Put(r.Context(), "flash", "Logout successful! GET LOST!!")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
