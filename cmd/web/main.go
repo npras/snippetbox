@@ -80,8 +80,8 @@ type config struct {
 type application struct {
 	config         *config
 	logger         *slog.Logger
-	snippet        *models.SnippetModel
-	user           *models.UserModel
+	snippet        models.SnippetModelInterface
+	user           models.UserModelInterface
 	templateCache  map[string]*template.Template
 	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager

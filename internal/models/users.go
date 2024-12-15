@@ -12,6 +12,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UserModelInterface interface {
+	Insert(name, email, password string) (int, error)
+	Authenticate(email, password string) (int, error)
+	IsExists(id int) (bool, error)
+}
+
 type User struct {
 	ID             int
 	Name           string
