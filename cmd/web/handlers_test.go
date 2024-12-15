@@ -11,7 +11,7 @@ func TestPing(t *testing.T) {
 	app := newTestApplication(t)
 	ts := newTestServer(t, app.routes())
 	defer ts.Close()
-	code, _, body := ts.get(t, "/ping")
+	code, _, body := ts.get("/ping")
 	assert.Equal(t, code, http.StatusOK)
 	assert.Equal(t, body, "OK")
 }
@@ -62,7 +62,7 @@ func TestSnippetView(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			code, _, body := ts.get(t, tt.urlPath)
+			code, _, body := ts.get(tt.urlPath)
 			assert.Equal(t, code, tt.wantCode)
 			if tt.wantBody != "" {
 				assert.StringContains(t, body, tt.wantBody)
@@ -70,27 +70,3 @@ func TestSnippetView(t *testing.T) {
 		})
 	}
 }
-
-/*
-func TestPing(t *testing.T) {
-	respWriter := httptest.NewRecorder()
-	req, err := http.NewRequest(http.MethodGet, "/", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ping(respWriter, req)
-
-	resp := respWriter.Result()
-	assert.Equal(t, resp.StatusCode, http.StatusOK)
-
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	body = bytes.TrimSpace(body)
-	assert.Equal(t, string(body), "OK")
-}
-*/
